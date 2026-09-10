@@ -1,0 +1,101 @@
+# Production deployment on Coolify. See deploy/coolify/README.md.
+#
+# Builds the upstream Dockerfile.production (RAILS_ENV=production, assets
+# compiled into the image) and adds the config files and startup that the
+# Production Start guide expects:
+# https://github.com/instructure/canvas-lms/wiki/Production-Start
+services:
+  migrate:
+    build: &build
+      context: .
+      dockerfile: Dockerfile.production
+    command: ["bash", "deploy/coolify/start.sh", "migrate"]
+    restart: "no"
+    exclude_from_hc: true
+    environment: &env
+      CANVAS_DATABASE_HOST: postgres
+      CANVAS_DATABASE_USERNAME: postgres
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      # Domain Coolify assigned to "web"; set CANVAS_DOMAIN to override it.
+      SERVICE_FQDN_WEB: ${SERVICE_FQDN_WEB}
+      CANVAS_DOMAIN: ${CANVAS_DOMAIN:-}
+      CANVAS_SSL: ${CANVAS_SSL:-false}
+      # Generated once by Coolify and kept. Never change either after the first
+      # deploy: encrypted data in the database becomes unreadable.
+      ENCRYPTION_KEY: ${SERVICE_PASSWORD_64_ENCRYPTIONKEY}
+      JWT_ENCRYPTION_KEY: ${SERVICE_PASSWORD_64_JWTKEY}
+      # First deploy only: the site administrator db:initial_setup creates.
+      CANVAS_LMS_ADMIN_EMAIL: ${CANVAS_LMS_ADMIN_EMAIL}
+      CANVAS_LMS_ADMIN_PASSWORD: ${SERVICE_PASSWORD_CANVASADMIN}
+      CANVAS_LMS_ACCOUNT_NAME: ${CANVAS_LMS_ACCOUNT_NAME:-Canvas}
+      CANVAS_LMS_STATS_COLLECTION: ${CANVAS_LMS_STATS_COLLECTION:-opt_out}
+      # Leave SMTP_ADDRESS empty to disable outgoing mail.
+      SMTP_ADDRESS: ${SMTP_ADDRESS:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      PASSENGER_MAX_POOL_SIZE: ${PASSENGER_MAX_POOL_SIZE:-6}
+    volumes: &volumes
+      - canvas-files:/usr/src/app/tmp/files
+    depends_on: &depends
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build: *build
+    command: ["bash", "deploy/coolify/start.sh", "web"]
+    environment: *env
+    volumes: *volumes
+    depends_on:
+      <<: *depends
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost/health_check || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  jobs:
+    build: *build
+    command: ["bash", "deploy/coolify/start.sh", "jobs"]
+    environment: *env
+    volumes: *volumes
+    depends_on:
+      <<: *depends
+      migrate:
+        condition: service_completed_successfully
+
+  postgres:
+    build:
+      context: ./docker-compose/postgres
+      args:
+        POSTGRES: "16"
+    environment:
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d canvas_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  canvas-files:
+  pg-data:
+  redis-data:

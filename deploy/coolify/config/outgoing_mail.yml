@@ -1,0 +1,20 @@
+<% smtp = !ENV["SMTP_ADDRESS"].to_s.empty? %>
+production:
+<% if smtp %>
+  delivery_method: smtp
+  address: <%= ENV["SMTP_ADDRESS"].to_json %>
+  port: <%= ENV.fetch("SMTP_PORT", "587").to_i %>
+  enable_starttls_auto: true
+<% unless ENV["SMTP_USER"].to_s.empty? %>
+  user_name: <%= ENV["SMTP_USER"].to_json %>
+  password: <%= ENV["SMTP_PASSWORD"].to_s.to_json %>
+  authentication: plain
+<% end %>
+<% else %>
+  # No SMTP_ADDRESS: mail is not sent.
+  delivery_method: test
+  perform_deliveries: false
+<% end %>
+  domain: <%= ENV["SMTP_FROM"].to_s.split("@").last.to_s.then { |d| d.empty? ? "canvas.local" : d }.to_json %>
+  outgoing_address: <%= ENV["SMTP_FROM"].to_s.then { |a| a.empty? ? "canvas@canvas.local" : a }.to_json %>
+  default_name: "Canvas"

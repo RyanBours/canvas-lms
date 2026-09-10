@@ -1,0 +1,4 @@
+production:
+  storage: local
+  # A named volume in docker-compose.coolify.yml.
+  path_prefix: tmp/files

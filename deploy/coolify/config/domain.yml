@@ -1,0 +1,10 @@
+<%
+  # CANVAS_DOMAIN wins; otherwise the domain Coolify assigned to "web", which
+  # may carry a scheme or list several domains.
+  domain = ENV["CANVAS_DOMAIN"].to_s.strip
+  domain = ENV["SERVICE_FQDN_WEB"].to_s if domain.empty?
+  domain = domain.split(",").first.to_s.strip.sub(%r{\Ahttps?://}, "").chomp("/")
+%>
+production:
+  domain: <%= domain.to_json %>
+  ssl: <%= ENV.fetch("CANVAS_SSL", "false") == "true" %>

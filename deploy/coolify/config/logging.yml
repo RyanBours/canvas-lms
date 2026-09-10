@@ -1,0 +1,3 @@
+production:
+  logger: rails
+  log_level: info
