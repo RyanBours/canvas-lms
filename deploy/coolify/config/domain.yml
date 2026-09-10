@@ -1,9 +1,7 @@
 <%
-  # CANVAS_DOMAIN wins; otherwise the domain Coolify assigned to "web", which
-  # may carry a scheme or list several domains.
-  domain = ENV["CANVAS_DOMAIN"].to_s.strip
-  domain = ENV["SERVICE_FQDN_WEB"].to_s if domain.empty?
-  domain = domain.split(",").first.to_s.strip.sub(%r{\Ahttps?://}, "").chomp("/")
+  # CANVAS_DOMAIN is a host; tolerate a scheme or a trailing slash pasted with it.
+  domain = ENV.fetch("CANVAS_DOMAIN").strip.sub(%r{\Ahttps?://}, "").chomp("/")
+  raise "CANVAS_DOMAIN is empty" if domain.empty?
 %>
 production:
   domain: <%= domain.to_json %>

@@ -16,9 +16,11 @@ services:
       CANVAS_DATABASE_HOST: postgres
       CANVAS_DATABASE_USERNAME: postgres
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
-      # Domain Coolify assigned to "web"; set CANVAS_DOMAIN to override it.
-      SERVICE_FQDN_WEB: ${SERVICE_FQDN_WEB}
-      CANVAS_DOMAIN: ${CANVAS_DOMAIN:-}
+      # The host Canvas is served on: the domain given to "web" in Coolify.
+      # Not ${SERVICE_FQDN_WEB}: Coolify treats that name as an instruction to
+      # generate a domain, and declaring it here left the application's URL
+      # empty ("https://"), which fails every deploy.
+      CANVAS_DOMAIN: ${CANVAS_DOMAIN}
       CANVAS_SSL: ${CANVAS_SSL:-false}
       # Generated once by Coolify and kept. Never change either after the first
       # deploy: encrypted data in the database becomes unreadable.

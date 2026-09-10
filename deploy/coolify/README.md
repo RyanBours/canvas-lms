@@ -29,12 +29,14 @@ Coolify generates and keeps these; do not change them after the first deploy:
 
 Set before the first deploy:
 
+- `CANVAS_DOMAIN` — the host Canvas is served on, without a scheme. Keep it
+  the same as the domain given to `web` in Coolify; the compose file cannot
+  read that one (see the comment there).
 - `CANVAS_LMS_ADMIN_EMAIL` — the first site administrator's login.
 - `CANVAS_LMS_ACCOUNT_NAME` — optional, defaults to `Canvas`.
 
 Optional:
 
-- `CANVAS_DOMAIN` — overrides the domain Coolify assigned to `web`.
 - `CANVAS_SSL=true` once the domain is served over HTTPS.
 - `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` —
   without `SMTP_ADDRESS` no mail is sent.
