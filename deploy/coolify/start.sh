@@ -13,8 +13,16 @@ done
 
 # Canvas logs to files; send them to the container output so Coolify shows them.
 mkdir -p log
-ln -sf /dev/stdout log/production.log
-ln -sf /dev/stdout log/delayed_job.log
+rm -f log/production.log log/delayed_job.log
+if [ "${1:-}" = web ]; then
+  # Passenger's app processes cannot open /dev/stdout: their stdout is a pipe
+  # nginx (root) owns. Follow the file instead.
+  touch log/production.log
+  tail -F -n 0 log/production.log &
+else
+  ln -s /dev/stdout log/production.log
+  ln -s /dev/stdout log/delayed_job.log
+fi
 
 case "${1:-}" in
   migrate)
