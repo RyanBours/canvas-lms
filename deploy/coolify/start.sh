@@ -5,11 +5,9 @@ set -euo pipefail
 cd /usr/src/app
 
 # Config files are templates reading the environment; see deploy/coolify/config.
-# The rest are the examples the Production Start guide copies unchanged.
+# external_migration.yml is the example the Production Start guide copies unchanged.
 cp deploy/coolify/config/*.yml config/
-for name in external_migration vault_contents dynamic_settings; do
-  [ -e "config/$name.yml" ] || cp "config/$name.yml.example" "config/$name.yml"
-done
+cp config/external_migration.yml.example config/external_migration.yml
 
 # Canvas logs to files; send them to the container output so Coolify shows them.
 mkdir -p log

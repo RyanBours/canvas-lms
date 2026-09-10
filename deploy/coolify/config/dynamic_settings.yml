@@ -1,0 +1,10 @@
+# Read by DynamicSettings in place of Consul.
+<% rce_host = ENV["RCE_HOST"].to_s.strip.chomp("/") %>
+production:
+<% unless rce_host.empty? %>
+  config:
+    canvas:
+      # The canvas-rce-api resource; the browser calls it directly.
+      rich-content-service:
+        app-host: <%= rce_host.to_json %>
+<% end %>

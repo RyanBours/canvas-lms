@@ -31,6 +31,11 @@ services:
       CANVAS_LMS_ADMIN_PASSWORD: ${SERVICE_PASSWORD_CANVASADMIN}
       CANVAS_LMS_ACCOUNT_NAME: ${CANVAS_LMS_ACCOUNT_NAME:-Canvas}
       CANVAS_LMS_STATS_COLLECTION: ${CANVAS_LMS_STATS_COLLECTION:-opt_out}
+      # The canvas-rce-api resource (a separate Coolify application): its URL,
+      # and the secrets it holds as ECOSYSTEM_KEY / ECOSYSTEM_SECRET.
+      RCE_HOST: ${RCE_HOST:-}
+      RCE_ENCRYPTION_SECRET: ${RCE_ENCRYPTION_SECRET:-}
+      RCE_SIGNING_SECRET: ${RCE_SIGNING_SECRET:-}
       # Leave SMTP_ADDRESS empty to disable outgoing mail.
       SMTP_ADDRESS: ${SMTP_ADDRESS:-}
       SMTP_PORT: ${SMTP_PORT:-587}

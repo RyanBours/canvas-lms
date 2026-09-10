@@ -1,0 +1,18 @@
+# Read by Canvas::Vault::FileClient in place of a Vault server.
+<%
+  encryption = ENV["RCE_ENCRYPTION_SECRET"].to_s
+  signing = ENV["RCE_SIGNING_SECRET"].to_s
+  # The encryption secret is the AES-256-GCM key itself, on both sides.
+  if !encryption.empty? && encryption.bytesize != 32
+    raise "RCE_ENCRYPTION_SECRET must be exactly 32 bytes, not #{encryption.bytesize}"
+  end
+%>
+production:
+<% unless encryption.empty? || signing.empty? %>
+  "app-canvas/data/secrets":
+    data:
+      # Shared with canvas-rce-api as ECOSYSTEM_KEY / ECOSYSTEM_SECRET.
+      canvas_security:
+        encryption_secret: <%= encryption.to_json %>
+        signing_secret: <%= signing.to_json %>
+<% end %>
