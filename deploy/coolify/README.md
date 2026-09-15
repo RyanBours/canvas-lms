@@ -35,9 +35,12 @@ Set before the first deploy:
 - `CANVAS_LMS_ADMIN_EMAIL` — the first site administrator's login.
 - `CANVAS_LMS_ACCOUNT_NAME` — optional, defaults to `Canvas`.
 
+Serve Canvas over HTTPS, with `CANVAS_SSL=true`. `config/environments/production.rb`
+sets `force_ssl`, so Canvas marks its session cookies `secure` and Rails does not
+send them over plain HTTP at all: pages load, but nobody can sign in.
+
 Optional:
 
-- `CANVAS_SSL=true` once the domain is served over HTTPS.
 - `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` —
   without `SMTP_ADDRESS` no mail is sent.
 
@@ -45,18 +48,22 @@ The Rich Content Editor's sidebar (course files, images, uploads) is served by
 `canvas-rce-api`, a separate Coolify application running the
 `instructure/canvas-rce-api` image on its own domain:
 
-- `RCE_HOST` — that application's URL, e.g. `http://canvas-rce.example.com`.
+- `RCE_HOST` — that application's URL, e.g. `https://canvas-rce.example.com`.
 - `RCE_ENCRYPTION_SECRET` — exactly 32 bytes; the same value as the RCE's
   `ECOSYSTEM_KEY`.
 - `RCE_SIGNING_SECRET` — the same value as the RCE's `ECOSYSTEM_SECRET`.
 
-The RCE application also needs `NODE_ENV=production`, and
-`HTTP_PROTOCOL_OVERRIDE=http` for as long as Canvas is served over plain HTTP.
-Serve both over HTTPS or neither: a browser will not call an HTTP service
-from an HTTPS page.
+The RCE application also needs `NODE_ENV=production`, and `STATSD_HOST` and
+`STATSD_PORT` (the code requires them although its README calls them optional;
+`127.0.0.1` and `8125` send the metrics nowhere). Serve it over HTTPS like
+Canvas: a browser will not call an HTTP service from an HTTPS page. It calls
+Canvas back over HTTPS unless `HTTP_PROTOCOL_OVERRIDE=http` is set.
 
 Canvas writes its domain into links and cookies, so changing the domain later
 needs a redeploy and breaks links already sent out.
+
+`NOTES.md` records how this deployment was set up and each problem met on the
+way, with its cause and fix.
 
 ## Not set up
 
