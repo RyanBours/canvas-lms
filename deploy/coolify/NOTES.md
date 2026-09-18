@@ -198,3 +198,19 @@ Roughly in the order they appeared.
   `Qti.migration_executable` (a path, not nil) and `Qti.qti_enabled?` (true).
 - **Re-importing does not repair an already-imported course** — it adds the
   quizzes but duplicates the pages. Delete the target courses and import again.
+
+#### …and then failed to run, because git on Windows dropped the mode bit
+
+- **Seen:** with the tool in place `Qti.qti_enabled?` was true and the import
+  failed at 36% with `Couldn't convert QTI 1.2 to 2.1, see error log:
+  …/qti_conversion_error.log`.
+- **Cause:** `Qti.get_conversion_command` runs the script *directly* —
+  `"…/migrate.py" --ucvars --nogui …` — rather than through `python`, so it needs
+  the executable bit. The shebang is right (`#! /usr/bin/env python3`), but the
+  files were committed from Windows where `core.filemode` is false, so
+  `migrate.py` went in as `100644` and exec'ing it fails.
+- **Fix:** `git update-index --chmod=+x` on the nine files upstream marks
+  executable, `migrate.py` among them. Check with
+  `git ls-files -s vendor/QTIMigrationTool`.
+- Anyone re-vendoring this from a Windows checkout will reintroduce it. The modes
+  are in git, not on the filesystem, so it survives once committed correctly.
