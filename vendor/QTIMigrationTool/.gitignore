@@ -1,0 +1,8 @@
+bb8/*
+assessments/*
+test/*
+.idea/*
+.project
+.pydevproject
+*.pyc
+*.iml

@@ -169,3 +169,32 @@ Roughly in the order they appeared.
 - A real domain instead of sslip.io, for both applications.
 - `files_domain`, LTI 1.3 keys, SMTP, and backups of the `canvas-files` and
   `pg-data` volumes.
+
+### Imported quizzes vanished, silently
+
+- **Seen:** a Common Cartridge import created every page, file and module but no
+  quizzes at all — 41 across five courses. The only symptom was repeated
+  `Missing links found in imported content - Wiki Page body` warnings, whose
+  detail showed unresolved references of `type: "quizzes"`. The cartridges were
+  fine: the manifest declared 28 `imsqti_xmlv1p2` assessments with
+  `assessment_qti.xml` for each.
+- **Cause:** `gems/plugins/qti_exporter/lib/qti_exporter/engine.rb` registers the
+  `qti_converter` plugin with `enabled: python_converter_found`, and that is
+  `Qti.migration_executable ? true : false`. `Qti` looks for `migrate.py` in
+  `vendor/QTIMigrationTool`, `vendor/qti_migration_tool`, or on `PATH`. Nothing
+  in the repo or `Dockerfile.production` puts it there — the Dockerfile installs
+  `python3-lxml` and `python-is-python3` *for* it, but never fetches it. With the
+  plugin disabled the importer skips assessments without raising.
+- **Fix:** `vendor/QTIMigrationTool` is committed to this fork (BSD, University of
+  Cambridge; 1.7 MB). `Dockerfile.production` already does
+  `COPY --chown=docker:docker . /usr/src/app`, so it lands in the image with no
+  Dockerfile change, and `.dockerignore` excludes only `vendor/bundle/` and
+  `vendor/*/.git`. It is committed with `git add -f` because `.gitignore` has
+  `/vendor`; tracked files override that, so no upstream file is modified.
+  Upstream's own pattern is a build-time clone, which was rejected deliberately:
+  gem fetches from GitHub failed twice during these deploys, and a clone in the
+  build path makes every rebuild depend on that working.
+- **Verify** on a running instance with `bin/rails console`:
+  `Qti.migration_executable` (a path, not nil) and `Qti.qti_enabled?` (true).
+- **Re-importing does not repair an already-imported course** — it adds the
+  quizzes but duplicates the pages. Delete the target courses and import again.
